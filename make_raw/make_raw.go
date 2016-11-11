@@ -53,24 +53,6 @@ func ImageFromFile(fileName string) (image.Image, error) {
 	return img, nil
 }
 
-func BGRA(c color.Color) [4]byte {
-	var p [4]byte
-	r, g, b, a := c.RGBA()
-
-	r = r >> 8
-	g = g >> 8
-	b = b >> 8
-	a = a >> 8
-
-	// in order b , g , r , a
-	p[0] = byte(b * a / 255)
-	p[1] = byte(g * a / 255)
-	p[2] = byte(r * a / 255)
-	p[3] = byte(a)
-
-	return p
-}
-
 func main() {
 	if *inFile == "" {
 		flag.Usage()
@@ -94,12 +76,22 @@ func main() {
 	defer out.Close()
 
 	bwOut := bufio.NewWriter(out)
+	var buf [4]byte
 	// https://blog.golang.org/go-image-package
 	b := img.Bounds()
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
-			p := BGRA(img.At(x, y))
-			bwOut.Write(p[:])
+			r, g, b, a := img.At(x, y).RGBA()
+			r = r >> 8
+			g = g >> 8
+			b = b >> 8
+			a = a >> 8
+			// in order b , g , r , a
+			buf[0] = byte(b * a / 255)
+			buf[1] = byte(g * a / 255)
+			buf[2] = byte(r * a / 255)
+			buf[3] = byte(a)
+			bwOut.Write(buf[:])
 		}
 	}
 
